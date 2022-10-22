@@ -1,13 +1,11 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE GADTs #-}
 
 module APlugin (plugin) where
 
 import GHC.Plugins hiding (Expr, Let, empty)
 import GHC.Hs
-import Debug.Trace
 import Data.Data
 import Data.Maybe
 
@@ -15,9 +13,9 @@ plugin :: Plugin
 plugin = defaultPlugin
   { parsedResultAction = replaceBangs
   }
-replaceBangs :: [CommandLineOption] -> ModSummary -> ParsedResult -> Hsc ParsedResult
-replaceBangs _ _ (ParsedResult (HsParsedModule res files) msgs) = do
-  pure . flip ParsedResult msgs . flip HsParsedModule files . trace "Plugin is running...\n" $ replacePuStrLn res
+replaceBangs :: [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
+replaceBangs _ _ (HsParsedModule res files) = do
+  pure . flip HsParsedModule files . trace "Plugin is running...\n" $ replacePuStrLn res
   where
     replacePuStrLn :: Data a => a -> a
     replacePuStrLn e = fromMaybe (gmapT replacePuStrLn e) (tryOccName e)
